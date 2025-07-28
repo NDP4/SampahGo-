@@ -1,41 +1,43 @@
-# DISABLED - Using main.yml instead
-# name: Laravel CI/CD
+name: SampahGo CI/CD
 
-# on:
-#   push:
-#     branches: [master, main]
-#   pull_request:
-#     branches: [master, main]
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+env:
+  COMPOSER_PROCESS_TIMEOUT: 0
+  COMPOSER_NO_INTERACTION: 1
+  COMPOSER_NO_AUDIT: 1
 
 jobs:
   test:
+    name: Tests & Code Quality
     runs-on: ubuntu-latest
 
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
           MYSQL_DATABASE: sampahgo_test
         ports:
-          - 33306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.2"
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
+          extensions: mbstring, dom, fileinfo, mysql, zip, bcmath, gd
+          coverage: xdebug
 
       - name: Cache Composer packages
-        id: composer-cache
         uses: actions/cache@v4
         with:
           path: vendor
@@ -43,7 +45,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-
 
-      - name: Install dependencies
+      - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
 
       - name: Setup Node.js
@@ -72,31 +74,48 @@ jobs:
           mkdir -p database
           touch database/database.sqlite
 
-      - name: Execute tests (Unit and Feature tests) via PHPUnit
+      - name: Run migrations
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
-        run: vendor/bin/phpunit --configuration phpunit.xml
+        run: php artisan migrate --force
+
+      - name: Run tests with coverage
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+        run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
 
       - name: Run Laravel Pint (Code Style)
         run: vendor/bin/pint --test
 
-  deploy:
-    needs: test
+      - name: Run security audit
+        run: composer audit
+
+  build:
+    name: Build & Deploy
     runs-on: ubuntu-latest
+    needs: test
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.2"
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
+          extensions: mbstring, dom, fileinfo, mysql, zip, bcmath, gd
 
       - name: Cache Composer packages
-        id: composer-cache
         uses: actions/cache@v4
         with:
           path: vendor
@@ -104,8 +123,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
+      - name: Install Composer dependencies (production)
+        run: composer install --optimize-autoloader --no-dev
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -116,28 +135,47 @@ jobs:
       - name: Install NPM dependencies
         run: npm ci
 
-      - name: Build assets for production
+      - name: Build assets
         run: npm run build
+
+      - name: Copy .env
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Generate key
+        run: php artisan key:generate
+
+      - name: Directory Permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Clear and cache config
+        run: |
+          php artisan config:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
 
       - name: Create deployment artifact
         env:
           GITHUB_SHA: ${{ github.sha }}
         run: |
-          mkdir -p /tmp/laravel-deploy
-          tar -czf "/tmp/laravel-deploy/${GITHUB_SHA}.tar.gz" \
+          mkdir -p /tmp/deploy
+          tar -czf "/tmp/deploy/${GITHUB_SHA}.tar.gz" \
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='tests' \
+            --exclude='.github' \
             --exclude='*.tar.gz' \
+            --exclude='package-lock.json' \
             --exclude='storage/logs/*' \
             --exclude='storage/framework/cache/*' \
             --exclude='storage/framework/sessions/*' \
             --exclude='storage/framework/views/*' \
             .
-          mv "/tmp/laravel-deploy/${GITHUB_SHA}.tar.gz" .
+          mv "/tmp/deploy/${GITHUB_SHA}.tar.gz" .
 
-      - name: Store artifact for distribution
+      - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-build
+          name: sampahgo-production-${{ github.sha }}
           path: ${{ github.sha }}.tar.gz
+          retention-days: 7
