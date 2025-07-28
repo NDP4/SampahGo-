@@ -54,6 +54,38 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the password for authentication.
+     */
+    public function getAuthPassword()
+    {
+        return $this->kata_sandi;
+    }
+
+    /**
+     * Get the name of the "password" column.
+     */
+    public function getAuthPasswordName()
+    {
+        return 'kata_sandi';
+    }
+
+    /**
+     * Get the name of the unique identifier for the user.
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'id';
+    }
+
+    /**
+     * Get the unique identifier for the user.
+     */
+    public function getAuthIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /**
      * Get the RT that owns the user.
      */
     public function rt(): BelongsTo
