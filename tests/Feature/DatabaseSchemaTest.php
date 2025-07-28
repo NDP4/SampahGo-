@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\ItemTransaksi;
 use App\Models\Kategori;
+use App\Models\Pendapatan;
+use App\Models\Persetujuan;
 use App\Models\Rt;
 use App\Models\Rw;
-use App\Models\User;
 use App\Models\Transaksi;
-use App\Models\ItemTransaksi;
-use App\Models\Persetujuan;
-use App\Models\Pendapatan;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

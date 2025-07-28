@@ -1,10 +1,11 @@
-name: Laravel CI/CD
+# DISABLED - Using main.yml instead
+# name: Laravel CI/CD
 
-on:
-  push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
+# on:
+#   push:
+#     branches: [master, main]
+#   pull_request:
+#     branches: [master, main]
 
 jobs:
   test:
@@ -75,7 +76,7 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
-        run: vendor/bin/phpunit --verbose --configuration phpunit.xml
+        run: vendor/bin/phpunit --configuration phpunit.xml
 
       - name: Run Laravel Pint (Code Style)
         run: vendor/bin/pint --test
@@ -110,17 +111,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-
-      - name: Cache NPM dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: "npm"
 
       - name: Install NPM dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build assets for production
         run: npm run build

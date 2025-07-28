@@ -44,7 +44,24 @@
 -   `.github/workflows/deploy.yml`
 -   `.github/workflows/quality-gates.yml`
 
-### 4. ✅ Pre-Push Local Checks
+### 4. ❌ Laravel Pint Error: "vendor/bin/pint: No such file or directory"
+
+**Problem**: Laravel Pint tidak ditemukan karena build job menggunakan `--no-dev` flag.
+
+**Solution**:
+
+-   ✅ Updated build job untuk install dependencies dengan dev packages untuk Pint
+-   ✅ Created new `main.yml` workflow yang lebih clean
+-   ✅ Separated testing dan production build jobs
+
+### 5. ❌ PHPUnit Error: "Unknown option --verbose"
+
+**Problem**: PHPUnit 11.x tidak support `--verbose` flag.
+
+**Solution**:
+
+-   ✅ Removed `--verbose` flag dari PHPUnit commands
+-   ✅ Using `--configuration phpunit.xml` untuk run tests
 
 **Scripts tersedia**:
 
@@ -71,18 +88,26 @@ composer ci
 1. User Factory dan Model authentication methods
 2. GitHub Actions deprecated versions
 3. NPM package-lock.json dan cache configuration
-4. All workflows updated to latest action versions
+4. Laravel Pint not found in build job
+5. PHPUnit --verbose flag compatibility
+6. All workflows updated to latest action versions
 
 ### ✅ Test Results:
 
 ```
 PHPUnit 11.5.27 by Sebastian Bergmann and contributors.
-.....                                                               5 / 5 (100%)
-Time: 00:00.566, Memory: 38.50 MB
-OK (5 tests, 11 assertions)
+.......                                                             7 / 7 (100%)
+Time: 00:00.650, Memory: 40.50 MB
+OK (7 tests, 13 assertions)
 ```
 
 ### ✅ Workflow Files Status:
+
+-   `main.yml` - ✅ Main workflow (NEW)
+-   `ci.yml` - ✅ Updated and ready
+-   `deploy.yml` - ✅ Updated to use main workflow
+-   `quality-gates.yml` - ✅ Updated and ready
+-   `laravel.yml` - ❌ Removed (replaced by main.yml)
 
 -   `ci.yml` - ✅ Updated and ready
 -   `laravel.yml` - ✅ Updated and ready

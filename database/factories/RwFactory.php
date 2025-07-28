@@ -20,7 +20,7 @@ class RwFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama' => 'RW ' . fake()->numberBetween(1, 20),
+            'nama' => 'RW '.fake()->numberBetween(1, 20),
         ];
     }
 }

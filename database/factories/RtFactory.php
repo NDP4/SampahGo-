@@ -21,7 +21,7 @@ class RtFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama' => 'RT ' . fake()->numberBetween(1, 20),
+            'nama' => 'RT '.fake()->numberBetween(1, 20),
             'rw_id' => Rw::factory(),
         ];
     }

@@ -41,7 +41,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
     }
@@ -51,7 +51,7 @@ class UserFactory extends Factory
      */
     public function withRole(string $role): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'peran' => $role,
         ]);
     }
@@ -61,7 +61,7 @@ class UserFactory extends Factory
      */
     public function withRtRw(?int $rtId = null, ?int $rwId = null): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'rt_id' => $rtId,
             'rw_id' => $rwId,
         ]);
@@ -72,7 +72,7 @@ class UserFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'aktif' => false,
         ]);
     }
