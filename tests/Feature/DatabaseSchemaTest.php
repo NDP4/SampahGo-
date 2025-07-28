@@ -11,13 +11,14 @@ use App\Models\ItemTransaksi;
 use App\Models\Persetujuan;
 use App\Models\Pendapatan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class DatabaseSchemaTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_can_create_rw_and_rt_relationship()
     {
         $rw = Rw::factory()->create(['nama' => 'RW 01']);
@@ -28,20 +29,19 @@ class DatabaseSchemaTest extends TestCase
         $this->assertEquals('RW 01', $rt->rw->nama);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_create_user_with_roles()
     {
         $rw = Rw::factory()->create();
         $rt = Rt::factory()->create(['rw_id' => $rw->id]);
 
-        $user = User::factory()->create([
-            'nama' => 'Test User',
-            'email' => 'test@example.com',
-            'peran' => 'Warga',
-            'rt_id' => $rt->id,
-            'rw_id' => $rw->id,
-            'aktif' => true,
-        ]);
+        $user = User::factory()
+            ->withRole('Warga')
+            ->withRtRw($rt->id, $rw->id)
+            ->create([
+                'nama' => 'Test User',
+                'email' => 'test@example.com',
+            ]);
 
         $this->assertDatabaseHas('users', [
             'nama' => 'Test User',
@@ -51,7 +51,7 @@ class DatabaseSchemaTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_create_kategori()
     {
         $kategori = Kategori::create([
@@ -66,13 +66,16 @@ class DatabaseSchemaTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_create_complete_transaction_flow()
     {
         // Setup basic data
         $rw = Rw::factory()->create();
         $rt = Rt::factory()->create(['rw_id' => $rw->id]);
-        $user = User::factory()->create(['rt_id' => $rt->id, 'rw_id' => $rw->id]);
+        $user = User::factory()
+            ->withRole('FO')
+            ->withRtRw($rt->id, $rw->id)
+            ->create();
         $kategori = Kategori::create([
             'nama' => 'Plastik',
             'deskripsi' => 'Sampah plastik',
@@ -126,7 +129,7 @@ class DatabaseSchemaTest extends TestCase
         $this->assertEquals($rt->id, $pendapatan->rt->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_enum_values()
     {
         $this->expectException(\Illuminate\Database\QueryException::class);
@@ -135,10 +138,9 @@ class DatabaseSchemaTest extends TestCase
         $rt = Rt::factory()->create(['rw_id' => $rw->id]);
 
         // Try to create user with invalid role
-        User::factory()->create([
-            'peran' => 'InvalidRole',
-            'rt_id' => $rt->id,
-            'rw_id' => $rw->id,
-        ]);
+        User::factory()
+            ->withRole('InvalidRole')
+            ->withRtRw($rt->id, $rw->id)
+            ->create();
     }
 }

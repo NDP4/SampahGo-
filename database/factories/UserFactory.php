@@ -24,10 +24,14 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'nama' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'kata_sandi' => static::$password ??= Hash::make('password'),
+            'peran' => fake()->randomElement(['SuperAdmin', 'RW', 'RT', 'FO', 'Warga']),
+            'rt_id' => null,
+            'rw_id' => null,
+            'aktif' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -37,8 +41,39 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Create user with specific role.
+     */
+    public function withRole(string $role): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'peran' => $role,
+        ]);
+    }
+
+    /**
+     * Create user with RT and RW.
+     */
+    public function withRtRw(?int $rtId = null, ?int $rwId = null): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'rt_id' => $rtId,
+            'rw_id' => $rwId,
+        ]);
+    }
+
+    /**
+     * Create inactive user.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'aktif' => false,
         ]);
     }
 }
