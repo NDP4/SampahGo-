@@ -2,9 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Team;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Jetstream\Features;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -24,15 +27,15 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama' => fake()->name(),
+            'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'kata_sandi' => static::$password ??= Hash::make('password'),
-            'peran' => fake()->randomElement(['SuperAdmin', 'RW', 'RT', 'FO', 'Warga']),
-            'rt_id' => null,
-            'rw_id' => null,
-            'aktif' => true,
+            'password' => static::$password ??= Hash::make('password'),
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
             'remember_token' => Str::random(10),
+            'profile_photo_path' => null,
+            'current_team_id' => null,
         ];
     }
 
@@ -47,33 +50,23 @@ class UserFactory extends Factory
     }
 
     /**
-     * Create user with specific role.
+     * Indicate that the user should have a personal team.
      */
-    public function withRole(string $role): static
+    public function withPersonalTeam(?callable $callback = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'peran' => $role,
-        ]);
-    }
+        if (! Features::hasTeamFeatures()) {
+            return $this->state([]);
+        }
 
-    /**
-     * Create user with RT and RW.
-     */
-    public function withRtRw(?int $rtId = null, ?int $rwId = null): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'rt_id' => $rtId,
-            'rw_id' => $rwId,
-        ]);
-    }
-
-    /**
-     * Create inactive user.
-     */
-    public function inactive(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'aktif' => false,
-        ]);
+        return $this->has(
+            Team::factory()
+                ->state(fn (array $attributes, User $user) => [
+                    'name' => $user->name.'\'s Team',
+                    'user_id' => $user->id,
+                    'personal_team' => true,
+                ])
+                ->when(is_callable($callback), $callback),
+            'ownedTeams'
+        );
     }
 }

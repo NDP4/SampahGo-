@@ -11,7 +11,8 @@ class Rw extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nama',
+        'nama_rw',
+        'alamat',
     ];
 
     /**
@@ -19,7 +20,7 @@ class Rw extends Model
      */
     public function rts(): HasMany
     {
-        return $this->hasMany(Rt::class);
+        return $this->hasMany(Rt::class, 'id_rw');
     }
 
     /**
@@ -27,7 +28,7 @@ class Rw extends Model
      */
     public function users(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'id_rw');
     }
 
     /**

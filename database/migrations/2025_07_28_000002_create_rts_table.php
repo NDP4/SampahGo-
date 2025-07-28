@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('rts', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');
-            $table->foreignId('rw_id')->constrained('rws')->onDelete('cascade');
+            $table->string('nama_rt');
+            $table->string('alamat');
+            $table->foreignId('id_rw')->constrained('rws')->onDelete('cascade');
             $table->timestamps();
         });
     }

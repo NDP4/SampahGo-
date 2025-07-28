@@ -4,39 +4,60 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Jetstream\HasProfilePhoto;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use HasApiTokens;
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory;
+    use HasProfilePhoto;
+    use Notifiable;
+    use TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'nama',
-        'email',
         'kata_sandi',
         'peran',
-        'rt_id',
-        'rw_id',
-        'aktif',
+        'alamat',
+        'no_hp',
+        'id_rw',
+        'id_rt',
+        'name',
+        'email',
+        'password',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
+        'password',
         'kata_sandi',
         'remember_token',
+        'two_factor_recovery_codes',
+        'two_factor_secret',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'profile_photo_url',
     ];
 
     /**
@@ -48,72 +69,31 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'kata_sandi' => 'hashed',
-            'aktif' => 'boolean',
+            'password' => 'hashed',
         ];
     }
 
     /**
-     * Get the password for authentication.
+     * Get the RW that owns the User
      */
-    public function getAuthPassword()
+    public function rw()
     {
-        return $this->kata_sandi;
+        return $this->belongsTo(Rw::class, 'id_rw');
     }
 
     /**
-     * Get the name of the "password" column.
+     * Get the RT that owns the User
      */
-    public function getAuthPasswordName()
+    public function rt()
     {
-        return 'kata_sandi';
+        return $this->belongsTo(Rt::class, 'id_rt');
     }
 
     /**
-     * Get the name of the unique identifier for the user.
+     * Get the transactions for the user.
      */
-    public function getAuthIdentifierName()
+    public function transaksi()
     {
-        return 'id';
-    }
-
-    /**
-     * Get the unique identifier for the user.
-     */
-    public function getAuthIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    /**
-     * Get the RT that owns the user.
-     */
-    public function rt(): BelongsTo
-    {
-        return $this->belongsTo(Rt::class);
-    }
-
-    /**
-     * Get the RW that owns the user.
-     */
-    public function rw(): BelongsTo
-    {
-        return $this->belongsTo(Rw::class);
-    }
-
-    /**
-     * Get the transaksis created by the user.
-     */
-    public function transaksis(): HasMany
-    {
-        return $this->hasMany(Transaksi::class, 'dibuat_oleh');
-    }
-
-    /**
-     * Get the persetujuans created by the user.
-     */
-    public function persetujuans(): HasMany
-    {
-        return $this->hasMany(Persetujuan::class, 'disetujui_oleh');
+        return $this->hasMany(Transaksi::class, 'id_user');
     }
 }

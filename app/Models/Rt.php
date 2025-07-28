@@ -12,8 +12,9 @@ class Rt extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nama',
-        'rw_id',
+        'nama_rt',
+        'alamat',
+        'id_rw',
     ];
 
     /**
@@ -21,7 +22,7 @@ class Rt extends Model
      */
     public function rw(): BelongsTo
     {
-        return $this->belongsTo(Rw::class);
+        return $this->belongsTo(Rw::class, 'id_rw');
     }
 
     /**
@@ -29,7 +30,7 @@ class Rt extends Model
      */
     public function users(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'id_rt');
     }
 
     /**
@@ -37,7 +38,7 @@ class Rt extends Model
      */
     public function transaksis(): HasMany
     {
-        return $this->hasMany(Transaksi::class);
+        return $this->hasMany(Transaksi::class, 'id_rt');
     }
 
     /**
